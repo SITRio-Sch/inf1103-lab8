@@ -1,124 +1,112 @@
+
 import json
 import os
 
+from product import Product
+from inventory import Inventory
 
 INVENTORY_FILE = "inventory.json"
 
 
 def load_inventory():
     if os.path.exists(INVENTORY_FILE):
-        print("inventory.json found.")
         with open(INVENTORY_FILE, "r") as file:
-            inventory = json.load(file)
-        print("Inventory loaded successfully.")
-        return inventory
-
-    print("inventory.json not found. Starting with an empty inventory.")
+            return json.load(file)
     return []
 
 
+def create_oop_inventory():
+    old_inventory = load_inventory()
+    inventory = Inventory()
+
+    for item in old_inventory:
+        product = Product(
+            item["id"],
+            item["name"],
+            item["price"],
+            item["stock"]
+        )
+        inventory.add_product(product)
+
+    return inventory
+
+
 def save_inventory(inventory):
+    data = []
+
+    for product in inventory.get_products():
+        data.append(product.to_dict())
+
     with open(INVENTORY_FILE, "w") as file:
-        json.dump(inventory, file, indent=4)
+        json.dump(data, file, indent=4)
 
-
-def display_all(inventory):
-    print("\nCurrent Inventory")
-    if not inventory:
-        print("No products in inventory.")
-        return
-
-    print("------------------------------------------------")
-    for product in inventory:
-        print(f"ID: {product['id']} | Name: {product['name']} | "
-              f"Price: ${product['price']:.2f} | Stock: {product['stock']}")
-    print("------------------------------------------------")
+    print("Inventory saved successfully.")
 
 
 def add_product(inventory):
     print("\nAdd New Product")
+
     product_id = input("Product ID: ").strip().upper()
 
-    # Check the ID before asking for the other details.
-    for product in inventory:
-        if product["id"].strip().upper() == product_id:
-            print("Product ID already exists.")
-            return
+    if not product_id:
+        print("Product ID cannot be empty.")
+        return
+
+    if inventory.search_product(product_id) is not None:
+        print("Product ID already exists.")
+        return
 
     name = input("Product Name: ").strip()
+
+    if not name:
+        print("Product name cannot be empty.")
+        return
+
     try:
         price = float(input("Price: "))
-    except ValueError:
-        print("Invalid price. Enter a non-negative number.")
-        return
-
-    if not 0 <= price < float("inf"):
-        print("Invalid price. Enter a non-negative number.")
-        return
-
-    try:
         stock = int(input("Stock Quantity: "))
+
+        if not 0 <= price < float("inf") or stock < 0:
+            print("Price and stock must be non-negative.")
+            return
+
     except ValueError:
-        print("Invalid stock quantity. Enter a non-negative integer.")
+        print("Invalid price or stock quantity.")
         return
 
-    if stock < 0:
-        print("Invalid stock quantity. Enter a non-negative integer.")
-        return
-
-    inventory.append({
-        "id": product_id,
-        "name": name,
-        "price": price,
-        "stock": stock
-    })
-    print("Product added successfully!")
+    product = Product(product_id, name, price, stock)
+    inventory.add_product(product)
 
 
 def update_stock(inventory):
     print("\nUpdate Stock")
+
     product_id = input("Enter Product ID: ").strip().upper()
+    product = inventory.search_product(product_id)
 
-    for product in inventory:
-        if product["id"].strip().upper() == product_id:
-            print("\nProduct Found:")
-            print(f"Name: {product['name']}")
-            print(f"Current Stock: {product['stock']}")
-            print()
+    if product is None:
+        print("Product not found.")
+        return
 
-            try:
-                stock = int(input("New Stock Quantity: "))
-            except ValueError:
-                print("Invalid stock quantity. Enter a non-negative integer.")
-                return
+    product.display_information()
 
-            if stock < 0:
-                print("Invalid stock quantity. Enter a non-negative integer.")
-                return
-
-            product["stock"] = stock
-            print("Stock updated successfully!")
-            return
-
-    print("Product not found.")
+    try:
+        quantity = int(input("New Stock Quantity: "))
+        product.update_stock(quantity)
+    except ValueError:
+        print("Invalid stock quantity.")
 
 
 def search_product(inventory):
     print("\nSearch Product")
+
     product_id = input("Enter Product ID: ").strip().upper()
+    product = inventory.search_product(product_id)
 
-    for product in inventory:
-        if product["id"].strip().upper() == product_id:
-            print("\nProduct Found")
-            print("------------------------------------------------")
-            print(f"ID: {product['id']}")
-            print(f"Name: {product['name']}")
-            print(f"Price: ${product['price']:.2f}")
-            print(f"Stock: {product['stock']}")
-            print("------------------------------------------------")
-            return
-
-    print("Product not found.")
+    if product is not None:
+        product.display_information()
+    else:
+        print("Product not found.")
 
 
 def show_menu():
@@ -133,39 +121,36 @@ def show_menu():
 
 
 def main():
-    print("========================================")
     print("INVENTORY MANAGEMENT SYSTEM")
-    print("========================================")
-    print()
-    inventory = load_inventory()
-    show_menu()
+
+    inventory = create_oop_inventory()
 
     while True:
-        option = input("\nEnter option: ").strip()
+        show_menu()
+        option = input("Enter option: ").strip()
 
         if option == "1":
-            display_all(inventory)
+            inventory.display_all()
+
         elif option == "2":
             add_product(inventory)
+
         elif option == "3":
             update_stock(inventory)
+
         elif option == "4":
             search_product(inventory)
+
         elif option == "5":
-            print("\nSaving inventory...")
             save_inventory(inventory)
-            print("Inventory saved successfully to inventory.json.")
+
         elif option == "6":
-            print("\nSaving inventory before exit...")
             save_inventory(inventory)
-            print("Inventory saved successfully.")
-            print()
-            print("Thank you for using Inventory Management System.")
             print("Program terminated.")
             break
+
         else:
-            print("Invalid option. Please enter a number from 1 to 6.")
-            show_menu()
+            print("Invalid option. Choose 1 to 6.")
 
 
 if __name__ == "__main__":
