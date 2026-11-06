@@ -1,16 +1,16 @@
-
 import json
 import os
 
-from product import Product
 from inventory import Inventory
+from physical_product import PhysicalProduct
+from digital_product import DigitalProduct
 
 INVENTORY_FILE = "inventory.json"
 
 
 def load_inventory():
     if os.path.exists(INVENTORY_FILE):
-        with open(INVENTORY_FILE, "r") as file:
+        with open(INVENTORY_FILE, "r", encoding="utf-8") as file:
             return json.load(file)
     return []
 
@@ -20,13 +20,31 @@ def create_oop_inventory():
     inventory = Inventory()
 
     for item in old_inventory:
-        product = Product(
-            item["id"],
-            item["name"],
-            item["price"],
-            item["stock"]
-        )
-        inventory.add_product(product)
+        product_type = item.get("type", "physical")
+
+        if product_type == "physical":
+            product = PhysicalProduct(
+                item["id"],
+                item["name"],
+                item["price"],
+                item["stock"],
+                item.get("weight", 0)
+            )
+
+        elif product_type == "digital":
+            product = DigitalProduct(
+                item["id"],
+                item["name"],
+                item["price"],
+                item["stock"],
+                item["download_size"]
+            )
+
+        else:
+            raise ValueError("Unknown product type.")
+
+        if not inventory.add_product(product):
+            raise ValueError("Duplicate product ID in inventory.json.")
 
     return inventory
 
@@ -37,7 +55,7 @@ def save_inventory(inventory):
     for product in inventory.get_products():
         data.append(product.to_dict())
 
-    with open(INVENTORY_FILE, "w") as file:
+    with open(INVENTORY_FILE, "w", encoding="utf-8") as file:
         json.dump(data, file, indent=4)
 
     print("Inventory saved successfully.")
@@ -45,12 +63,16 @@ def save_inventory(inventory):
 
 def add_product(inventory):
     print("\nAdd New Product")
+    print("1. Physical Product")
+    print("2. Digital Product")
+
+    product_type = input("Choose product type: ").strip()
+
+    if product_type not in ("1", "2"):
+        print("Invalid product type.")
+        return
 
     product_id = input("Product ID: ").strip().upper()
-
-    if not product_id:
-        print("Product ID cannot be empty.")
-        return
 
     if inventory.search_product(product_id) is not None:
         print("Product ID already exists.")
@@ -58,8 +80,8 @@ def add_product(inventory):
 
     name = input("Product Name: ").strip()
 
-    if not name:
-        print("Product name cannot be empty.")
+    if not product_id or not name:
+        print("Product ID and name cannot be empty.")
         return
 
     try:
@@ -70,12 +92,32 @@ def add_product(inventory):
             print("Price and stock must be non-negative.")
             return
 
-    except ValueError:
-        print("Invalid price or stock quantity.")
-        return
+        if product_type == "1":
+            weight = float(input("Weight (kg): "))
 
-    product = Product(product_id, name, price, stock)
-    inventory.add_product(product)
+            if not 0 <= weight < float("inf"):
+                print("Invalid weight.")
+                return
+
+            product = PhysicalProduct(
+                product_id, name, price, stock, weight
+            )
+
+        else:
+            download_size = float(input("Download Size (MB): "))
+
+            if not 0 <= download_size < float("inf"):
+                print("Invalid download size.")
+                return
+
+            product = DigitalProduct(
+                product_id, name, price, stock, download_size
+            )
+
+        inventory.add_product(product)
+
+    except ValueError:
+        print("Invalid input. Please enter valid numbers.")
 
 
 def update_stock(inventory):
@@ -121,9 +163,13 @@ def show_menu():
 
 
 def main():
-    print("INVENTORY MANAGEMENT SYSTEM")
+    print("INVENTORY MANAGEMENT SYSTEM - LAB 7")
 
-    inventory = create_oop_inventory()
+    try:
+        inventory = create_oop_inventory()
+    except (OSError, ValueError, TypeError, KeyError) as error:
+        print(f"Unable to load inventory: {error}")
+        return
 
     while True:
         show_menu()

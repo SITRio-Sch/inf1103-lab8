@@ -1,10 +1,18 @@
-class Product:
+from abc import ABC, abstractmethod
+
+
+class Product(ABC):
     def __init__(self, product_id, name, price, stock):
+        if not product_id or not name:
+            raise ValueError("Product ID and name cannot be empty.")
+        if price < 0 or stock < 0:
+            raise ValueError("Price and stock cannot be negative.")
+
         self.__product_id = product_id
         self.__name = name
         self.__price = price
         self.__stock = stock
-    
+
     def update_stock(self, quantity):
         if quantity >= 0:
             self.__stock = quantity
@@ -17,13 +25,10 @@ class Product:
         print(f"Name: {self.__name}")
         print(f"Price: ${self.__price:.2f}")
         print(f"Stock: {self.__stock}")
-        print("----------------------")
 
-    
     def get_product_id(self):
         return self.__product_id
 
-    
     def to_dict(self):
         return {
             "id": self.__product_id,
@@ -31,3 +36,7 @@ class Product:
             "price": self.__price,
             "stock": self.__stock
         }
+
+    @abstractmethod
+    def get_fulfilment_info(self):
+        pass
