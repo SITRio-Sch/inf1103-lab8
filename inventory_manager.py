@@ -4,40 +4,71 @@ import os
 from inventory import Inventory
 from physical_product import PhysicalProduct
 from digital_product import DigitalProduct
+from product import ProductData
+from supplier import Supplier
 
 INVENTORY_FILE = "inventory.json"
 
+# Shared by every old record that has no supplier of its own.
+DEFAULT_SUPPLIER = Supplier("S000", "Unknown Supplier", "unknown@example.com")
 
-def load_inventory():
+
+def load_inventory() -> list[ProductData]:
     if os.path.exists(INVENTORY_FILE):
         with open(INVENTORY_FILE, "r", encoding="utf-8") as file:
             return json.load(file)
     return []
 
 
-def create_oop_inventory():
+def get_supplier_for_record(
+    item: ProductData,
+    supplier_cache: dict[str, Supplier]
+) -> Supplier:
+    supplier_data = item.get("supplier")
+
+    if not isinstance(supplier_data, dict):
+        return DEFAULT_SUPPLIER
+
+    # The same supplier ID always gives back the same Supplier object.
+    supplier_id = str(supplier_data["id"])
+
+    if supplier_id not in supplier_cache:
+        supplier_cache[supplier_id] = Supplier(
+            supplier_id,
+            str(supplier_data["name"]),
+            str(supplier_data["contact_email"])
+        )
+
+    return supplier_cache[supplier_id]
+
+
+def create_oop_inventory() -> Inventory:
     old_inventory = load_inventory()
     inventory = Inventory()
+    supplier_cache: dict[str, Supplier] = {}
 
     for item in old_inventory:
         product_type = item.get("type", "physical")
+        supplier = get_supplier_for_record(item, supplier_cache)
 
         if product_type == "physical":
             product = PhysicalProduct(
-                item["id"],
-                item["name"],
-                item["price"],
-                item["stock"],
-                item.get("weight", 0)
+                str(item["id"]),
+                str(item["name"]),
+                float(item["price"]),
+                int(item["stock"]),
+                float(item.get("weight", 0)),
+                supplier
             )
 
         elif product_type == "digital":
             product = DigitalProduct(
-                item["id"],
-                item["name"],
-                item["price"],
-                item["stock"],
-                item["download_size"]
+                str(item["id"]),
+                str(item["name"]),
+                float(item["price"]),
+                int(item["stock"]),
+                float(item["download_size"]),
+                supplier
             )
 
         else:
@@ -49,8 +80,8 @@ def create_oop_inventory():
     return inventory
 
 
-def save_inventory(inventory):
-    data = []
+def save_inventory(inventory: Inventory) -> None:
+    data: list[ProductData] = []
 
     for product in inventory.get_products():
         data.append(product.to_dict())
@@ -61,7 +92,38 @@ def save_inventory(inventory):
     print("Inventory saved successfully.")
 
 
-def add_product(inventory):
+def find_existing_supplier(inventory: Inventory, supplier_id: str) -> Supplier | None:
+    for product in inventory.get_products():
+        if product.supplier.supplier_id == supplier_id:
+            return product.supplier
+
+    return None
+
+
+def ask_for_supplier(inventory: Inventory) -> Supplier | None:
+    supplier_id = input("Supplier ID: ").strip().upper()
+
+    if not supplier_id:
+        print("Supplier ID cannot be empty.")
+        return None
+
+    existing_supplier = find_existing_supplier(inventory, supplier_id)
+
+    if existing_supplier is not None:
+        print(f"Using existing supplier: {existing_supplier.name}")
+        return existing_supplier
+
+    name = input("Supplier Name: ").strip()
+    contact_email = input("Supplier Email: ").strip()
+
+    if not name or not contact_email:
+        print("Supplier name and email cannot be empty.")
+        return None
+
+    return Supplier(supplier_id, name, contact_email)
+
+
+def add_product(inventory: Inventory) -> None:
     print("\nAdd New Product")
     print("1. Physical Product")
     print("2. Digital Product")
@@ -74,7 +136,7 @@ def add_product(inventory):
 
     product_id = input("Product ID: ").strip().upper()
 
-    if inventory.search_product(product_id) is not None:
+    if inventory.find_product(product_id) is not None:
         print("Product ID already exists.")
         return
 
@@ -82,6 +144,11 @@ def add_product(inventory):
 
     if not product_id or not name:
         print("Product ID and name cannot be empty.")
+        return
+
+    supplier = ask_for_supplier(inventory)
+
+    if supplier is None:
         return
 
     try:
@@ -100,7 +167,7 @@ def add_product(inventory):
                 return
 
             product = PhysicalProduct(
-                product_id, name, price, stock, weight
+                product_id, name, price, stock, weight, supplier
             )
 
         else:
@@ -111,7 +178,7 @@ def add_product(inventory):
                 return
 
             product = DigitalProduct(
-                product_id, name, price, stock, download_size
+                product_id, name, price, stock, download_size, supplier
             )
 
         inventory.add_product(product)
@@ -120,11 +187,11 @@ def add_product(inventory):
         print("Invalid input. Please enter valid numbers.")
 
 
-def update_stock(inventory):
+def update_stock(inventory: Inventory) -> None:
     print("\nUpdate Stock")
 
     product_id = input("Enter Product ID: ").strip().upper()
-    product = inventory.search_product(product_id)
+    product = inventory.find_product(product_id)
 
     if product is None:
         print("Product not found.")
@@ -139,11 +206,11 @@ def update_stock(inventory):
         print("Invalid stock quantity.")
 
 
-def search_product(inventory):
+def search_product(inventory: Inventory) -> None:
     print("\nSearch Product")
 
     product_id = input("Enter Product ID: ").strip().upper()
-    product = inventory.search_product(product_id)
+    product = inventory.find_product(product_id)
 
     if product is not None:
         product.display_information()
@@ -151,19 +218,27 @@ def search_product(inventory):
         print("Product not found.")
 
 
-def show_menu():
+def remove_product(inventory: Inventory) -> None:
+    print("\nRemove Product")
+
+    product_id = input("Enter Product ID: ").strip().upper()
+    inventory.remove_product(product_id)
+
+
+def show_menu() -> None:
     print("\n----------- MENU -----------")
     print("1. Display All Products")
     print("2. Add Product")
     print("3. Update Stock")
     print("4. Search Product")
-    print("5. Save Inventory")
-    print("6. Exit")
+    print("5. Remove Product")
+    print("6. Save Inventory")
+    print("7. Exit")
     print("----------------------------")
 
 
-def main():
-    print("INVENTORY MANAGEMENT SYSTEM - LAB 7")
+def main() -> None:
+    print("INVENTORY MANAGEMENT SYSTEM - LAB 8")
 
     try:
         inventory = create_oop_inventory()
@@ -176,7 +251,7 @@ def main():
         option = input("Enter option: ").strip()
 
         if option == "1":
-            inventory.display_all()
+            inventory.display_all_products()
 
         elif option == "2":
             add_product(inventory)
@@ -188,15 +263,18 @@ def main():
             search_product(inventory)
 
         elif option == "5":
-            save_inventory(inventory)
+            remove_product(inventory)
 
         elif option == "6":
+            save_inventory(inventory)
+
+        elif option == "7":
             save_inventory(inventory)
             print("Program terminated.")
             break
 
         else:
-            print("Invalid option. Choose 1 to 6.")
+            print("Invalid option. Choose 1 to 7.")
 
 
 if __name__ == "__main__":

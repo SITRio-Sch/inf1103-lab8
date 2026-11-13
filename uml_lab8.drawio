@@ -1,0 +1,92 @@
+<mxfile host="app.diagrams.net" version="24.0.0">
+  <diagram id="lab8-uml" name="Lab 8 UML">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1340" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- Classes -->
+        <mxCell id="inv" value="&lt;b&gt;Inventory&lt;/b&gt;&lt;hr&gt;- products: Product [0..*]&lt;hr&gt;+ addProduct(product: Product): Boolean&lt;br&gt;+ removeProduct(productId: String): Product&lt;br&gt;+ findProduct(productId: String): Product&lt;br&gt;+ displayAllProducts(): Void" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="320" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="sup" value="&lt;b&gt;Supplier&lt;/b&gt;&lt;hr&gt;- supplierId: String&lt;br&gt;- name: String&lt;br&gt;- contactEmail: String&lt;hr&gt;+ displayInformation(): Void&lt;br&gt;+ toDict(): Dict" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="240" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="prod" value="&lt;i&gt;&amp;#171;abstract&amp;#187;&lt;/i&gt;&lt;br&gt;&lt;i&gt;&lt;b&gt;Product&lt;/b&gt;&lt;/i&gt;&lt;hr&gt;- productId: String&lt;br&gt;- name: String&lt;br&gt;- price: Float&lt;br&gt;- stock: Integer&lt;br&gt;- supplier: Supplier&lt;hr&gt;+ Product(productId: String, name: String,&lt;br&gt;price: Float, stock: Integer, supplier: Supplier)&lt;br&gt;+ updateStock(quantity: Integer): Void&lt;br&gt;+ displayInformation(): Void&lt;br&gt;+ toDict(): Dict&lt;br&gt;&lt;i&gt;+ getFulfilmentInfo(): String&lt;/i&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="420" y="260" width="340" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="phys" value="&lt;b&gt;PhysicalProduct&lt;/b&gt;&lt;hr&gt;- weight: Float&lt;hr&gt;+ getFulfilmentInfo(): String&lt;br&gt;+ calculateShippingCost(): Float" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="330" y="600" width="240" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="dig" value="&lt;b&gt;DigitalProduct&lt;/b&gt;&lt;hr&gt;- downloadSize: Float&lt;hr&gt;+ getFulfilmentInfo(): String" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="620" y="600" width="240" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="can" value="&#171;interface&#187;&lt;br&gt;&lt;b&gt;CanBeShipped&lt;/b&gt;&lt;hr&gt;+ calculateShippingCost(): Float" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="40" y="600" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="ord" value="&lt;b&gt;Order&lt;/b&gt;&lt;hr&gt;- orderId: String&lt;br&gt;- orderLines: OrderLine [1..*]&lt;hr&gt;+ addOrderLine(product: Product, quantity: Integer): Void&lt;br&gt;+ removeOrderLine(productId: String): Boolean&lt;br&gt;+ calculateTotal(): Float&lt;br&gt;+ displayOrder(): Void" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="960" y="260" width="320" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="ordl" value="&lt;b&gt;OrderLine&lt;/b&gt;&lt;hr&gt;- product: Product&lt;br&gt;- quantity: Integer&lt;hr&gt;+ calculateSubtotal(): Float&lt;br&gt;+ displayInformation(): Void" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="960" y="520" width="320" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="&lt;b&gt;Legend&lt;/b&gt;&lt;br&gt;Association: plain solid line (labelled)&lt;br&gt;Aggregation: hollow diamond at the whole&lt;br&gt;Composition: filled diamond at the whole&lt;br&gt;Inheritance: solid line, hollow triangle&lt;br&gt;Realisation: dashed line, hollow triangle" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="960" y="740" width="320" height="120" as="geometry" />
+        </mxCell>
+        <!-- Relationships -->
+        <!-- Aggregation: Inventory (hollow diamond) to Product -->
+        <mxCell id="e_agg" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=diamondThin;startFill=0;startSize=18;endArrow=none;exitX=1;exitY=0.6;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="inv" target="prod">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Association: Supplier supplies Product -->
+        <mxCell id="e_assoc" value="" style="rounded=0;html=1;endArrow=none;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.42;entryDx=0;entryDy=0;" edge="1" parent="1" source="sup" target="prod">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Generalisation: PhysicalProduct to Product -->
+        <mxCell id="e_gen_phys" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.09;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="phys" target="prod">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Generalisation: DigitalProduct to Product -->
+        <mxCell id="e_gen_dig" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.9;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="dig" target="prod">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Realisation: PhysicalProduct implements CanBeShipped (dashed) -->
+        <mxCell id="e_real" value="" style="rounded=0;html=1;dashed=1;endArrow=block;endFill=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.67;entryDx=0;entryDy=0;" edge="1" parent="1" source="phys" target="can">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Composition: Order (filled diamond) to OrderLine -->
+        <mxCell id="e_comp" value="" style="rounded=0;html=1;startArrow=diamondThin;startFill=1;startSize=18;endArrow=none;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ord" target="ordl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Directed association: OrderLine to Product (open arrow at Product) -->
+        <mxCell id="e_dir" value="" style="rounded=0;html=1;endArrow=open;endFill=0;exitX=0;exitY=0.3;exitDx=0;exitDy=0;entryX=1;entryY=0.67;entryDx=0;entryDy=0;" edge="1" parent="1" source="ordl" target="prod">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Multiplicities and labels -->
+        <mxCell id="l_sup1" value="1" style="text;html=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="284" y="350" width="16" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="l_supplies" value="supplies" style="text;html=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="300" y="328" width="80" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="l_prod0" value="0..*" style="text;html=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="388" y="350" width="36" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="l_agg0" value="0..*" style="text;html=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="596" y="238" width="36" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="l_prod1" value="1" style="text;html=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="766" y="408" width="16" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="l_ordl0" value="0..*" style="text;html=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="930" y="568" width="36" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="l_comp1" value="1" style="text;html=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1126" y="454" width="16" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="l_comp2" value="1..*" style="text;html=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1126" y="496" width="40" height="18" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
