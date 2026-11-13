@@ -213,6 +213,67 @@ def test_lsp() -> None:
     print("PASS: DigitalProduct does not override update_stock")
 
 
+def show_product_details(product: Product) -> None:
+    product.display_information()
+    print(product.get_fulfilment_info())
+
+
+def test_show_product_details() -> None:
+    section("SHOW_PRODUCT_DETAILS (POLYMORPHISM)")
+
+    supplier = Supplier("S104", "Detail Co", "hello@detail.example")
+    lamp = PhysicalProduct("T-LAMP", "Test Lamp", 30.0, 4, 1.5, supplier)
+    guide = DigitalProduct("T-GUIDE", "Test Guide", 9.0, 40, 2.0, supplier)
+
+    show_product_details(lamp)
+    show_product_details(guide)
+    print("PASS: show_product_details ran on a PhysicalProduct and a DigitalProduct")
+
+
+def test_shared_inventory_lsp() -> None:
+    section("SHARED INVENTORY LSP")
+
+    supplier = Supplier("S105", "Shared Co", "team@shared.example")
+    desk = PhysicalProduct("T-DESK", "Test Desk", 150.0, 2, 20.0, supplier)
+    course = DigitalProduct("T-COURSE", "Test Course", 60.0, 100, 500.0, supplier)
+
+    inventory = Inventory()
+    assert inventory.add_product(desk)
+    assert inventory.add_product(course)
+
+    fulfilment: list[str] = []
+    for product in inventory.get_products():
+        product.display_information()
+        info = product.get_fulfilment_info()
+        print(info)
+        fulfilment.append(info)
+
+    assert fulfilment == [
+        "This product requires physical shipping.",
+        "This product is delivered digitally.",
+    ]
+    print("PASS: one loop over the shared Inventory handled both product types")
+
+
+def test_fulfilment_predictions() -> None:
+    section("PREDICT FIRST 4")
+
+    supplier = Supplier("S106", "Ship Co", "ship@example.com")
+    box = PhysicalProduct("T-BOX", "Test Box", 5.0, 10, 0.5, supplier)
+    pdf = DigitalProduct("T-PDF", "Test PDF", 3.0, 99, 0.2, supplier)
+
+    print("PREDICT FIRST 4 CHECK: what does get_fulfilment_info() print "
+          "for each product?")
+    box_text = box.get_fulfilment_info()
+    pdf_text = pdf.get_fulfilment_info()
+    print(f"Physical: {box_text}")
+    print(f"Digital: {pdf_text}")
+
+    assert box_text == "This product requires physical shipping."
+    assert pdf_text == "This product is delivered digitally."
+    print("PASS: fulfilment text matches the implementation for both types")
+
+
 def test_type_hints() -> None:
     section("TYPE HINTS")
 
@@ -229,6 +290,8 @@ def test_type_hints() -> None:
         Inventory.find_product,
         Inventory.remove_product,
         Inventory.display_all_products,
+        Inventory.get_products,
+        show_product_details,
         OrderLine.calculate_subtotal,
         Order.add_order_line,
         Order.remove_order_line,
@@ -248,6 +311,9 @@ def main() -> None:
     test_aggregation()
     test_composition()
     test_lsp()
+    test_show_product_details()
+    test_shared_inventory_lsp()
+    test_fulfilment_predictions()
     test_type_hints()
     print("\nALL TESTS PASSED")
 
