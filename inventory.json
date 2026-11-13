@@ -10,7 +10,7 @@
             "contact_email": "sales@techsource.example"
         },
         "type": "physical",
-        "weight": 0.0
+        "weight": 2.0
     },
     {
         "id": "P002",
@@ -23,7 +23,7 @@
             "contact_email": "sales@techsource.example"
         },
         "type": "physical",
-        "weight": 0.0
+        "weight": 0.1
     },
     {
         "id": "P003",
@@ -36,7 +36,7 @@
             "contact_email": "sales@techsource.example"
         },
         "type": "physical",
-        "weight": 0.0
+        "weight": 0.8
     },
     {
         "id": "P004",
@@ -49,7 +49,7 @@
             "contact_email": "sales@techsource.example"
         },
         "type": "physical",
-        "weight": 0.0
+        "weight": 5.0
     },
     {
         "id": "P005",
@@ -62,7 +62,7 @@
             "contact_email": "sales@techsource.example"
         },
         "type": "physical",
-        "weight": 0.0
+        "weight": 0.3
     },
     {
         "id": "D001",
