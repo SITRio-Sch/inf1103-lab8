@@ -3,24 +3,23 @@ On branch main
 Your branch is up to date with 'origin/main'.
 
 Changes not staged for commit:
-  Changes: order.py, product.py, inventory_manager.py, Dockerfile,
-           discount_strategy.py (new), product_factory.py (new),
-           products.csv (new), test_lab9.py (new), test_lab8.py (deleted),
-           uml_lab9.drawio (new), uml_lab9.png (new)
+  modified: demo_lab9.py, discount_strategy.py, render_uml.py,
+            test_lab9.py, uml_lab9.drawio, uml_lab9.png
+Untracked files:
+  INF1103_Lab9.zip, Lab 9.docx, docker_workflow.png, docker_workflow.txt,
+  git_workflow.png, git_workflow.txt, make_screens.py, write_notes.py
 
 $ git add .
-$ git commit -m "Lab 9: Strategy and Factory patterns, validation, exception handling and tests"
-[main 8d31f46] Lab 9: Strategy and Factory patterns, validation, exception handling and tests
- 15 files changed, 749 insertions(+), 472 deletions(-)
- create mode 100644 discount_strategy.py
- create mode 100644 product_factory.py
- create mode 100644 products.csv
- create mode 100644 test_lab9.py
- delete mode 100644 test_lab8.py
- create mode 100644 uml_lab9.drawio
- create mode 100644 uml_lab9.png
+$ git commit -m "Lab 9: StudentDiscount strategy, aggregation UML, diagnose notes, transcripts and tests"
+[main b901662] Lab 9: StudentDiscount strategy, aggregation UML, diagnose notes, transcripts and tests
+ 14 files changed, 347 insertions(+), 12 deletions(-)
+
+$ git push origin
+To https://github.com/SITRio-Sch/inf1103-lab8.git
+   8d31f46..b901662  main -> main
 
 $ git log --oneline
+b901662 Lab 9: StudentDiscount strategy, aggregation UML, diagnose notes, transcripts and tests
 8d31f46 Lab 9: Strategy and Factory patterns, validation, exception handling and tests
 897cabc Add exported UML class diagram
 adf38a8 Add show_product_details, shared-inventory LSP test and Predict First 4 check
@@ -31,6 +30,7 @@ eb19eb3 Lab 8: association, aggregation, composition, type hints and LSP
 370887e Refactored inventory system using OOP
 01f74c9 added inventory_manager
 
+$ git rm --cached INF1103_Lab9.zip
+$ echo "INF1103_Lab9.zip" >> .gitignore
+$ git commit -m "Lab 9: updated workflow screenshots; submission zip kept out of the repo"
 $ git push origin
-To https://github.com/SITRio-Sch/inf1103-lab8.git
-   897cabc..8d31f46  main -> main
