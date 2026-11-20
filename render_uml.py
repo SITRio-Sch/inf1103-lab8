@@ -1,8 +1,14 @@
-"""Render uml_lab9.png from the class layout below (matches uml_lab9.drawio)."""
+"""Render uml_lab9.png. Box positions and edges match uml_lab9.drawio."""
+
+import math
 
 from PIL import Image, ImageDraw, ImageFont
 
-W, H = 1500, 1000
+W, H = 1820, 1000
+LINE = "#333333"
+DASH = "#666666"
+LEFT_Q, RIGHT_Q = "«", "»"  # guillemets for stereotypes
+
 img = Image.new("RGB", (W, H), "white")
 d = ImageDraw.Draw(img)
 
@@ -11,159 +17,170 @@ f_body = ImageFont.truetype("arial.ttf", 12)
 f_small = ImageFont.truetype("arial.ttf", 11)
 
 
-
-def draw_box(x, y, w, hh, ah, mh, name, attrs, methods, abstract, iface):
+def draw_box(x, y, w, hh, ah, mh, name, attrs, methods, stereotype=None):
+    """hh = header height, ah = attribute block, mh = method block (pixels)."""
     h = hh + ah + mh + 8
-    d.rectangle([x, y, x + w, y + h], fill="#ffffff", outline="#333333", width=2)
-    label = name
-    if abstract:
-        d.text((x + 6, y + 2), "«abstract»", font=f_small, fill="#555555")
-        d.text((x + 6, y + 16), label, font=f_title, fill="#000000")
-    elif iface:
-        d.text((x + 6, y + 2), "«interface»", font=f_small, fill="#555555")
-        d.text((x + 6, y + 16), label, font=f_title, fill="#000000")
+    d.rectangle([x, y, x + w, y + h], fill="#ffffff", outline=LINE, width=2)
+    if stereotype:
+        d.text((x + 6, y + 2), f"{LEFT_Q}{stereotype}{RIGHT_Q}", font=f_small, fill="#555555")
+        d.text((x + 6, y + 16), name, font=f_title, fill="#000000")
     else:
-        d.text((x + 6, y + 4), label, font=f_title, fill="#000000")
+        d.text((x + 6, y + 4), name, font=f_title, fill="#000000")
     yy = y + hh
-    if attrs:
-        d.line([x, y + hh - 4, x + w, y + hh - 4], fill="#333333", width=1)
-        for a in attrs:
-            d.text((x + 6, yy), a, font=f_body, fill="#000000")
-            yy += 20
-    if methods:
-        d.line([x, yy - 4, x + w, yy - 4], fill="#333333", width=1)
-        for m in methods:
-            d.text((x + 6, yy), m, font=f_body, fill="#000000")
-            yy += 20
+    for block in (attrs, methods):
+        if block:
+            d.line([x, yy - 4, x + w, yy - 4], fill=LINE, width=1)
+            for row in block:
+                d.text((x + 6, yy), row, font=f_body, fill="#000000")
+                yy += 20
     return (x, y, x + w, y + h)
 
 
-def anchor(box, side):
-    x0, y0, x1, y1 = box
-    if side == "l":
-        return (x0, (y0 + y1) / 2)
-    if side == "r":
-        return (x1, (y0 + y1) / 2)
-    if side == "t":
-        return ((x0 + x1) / 2, y0)
-    return ((x0 + x1) / 2, y1)
+def label(x, y, text):
+    d.text((x, y), text, font=f_small, fill=LINE)
 
 
-def line(a, b, dashed=False, label=None, label_pos=None):
-    if dashed:
-        # draw a dashed line by segments
-        import math
-        n = 12
-        for i in range(n):
-            t0, t1 = i / n, (i + 0.6) / n
-            d.line([
-                (a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0),
-                (a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1),
-            ], fill="#666666", width=1)
-    else:
-        d.line([a, b], fill="#333333", width=1)
-    if label:
-        px, py = label_pos if label_pos else ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - 8)
-        d.text((px, py), label, font=f_small, fill="#333333")
+def unit(a, b):
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    length = math.hypot(dx, dy)
+    return dx / length, dy / length
 
 
-def triangle(a, b):
-    """Hollow generalisation arrow head at b (parent end)."""
-    import math
-    ang = math.atan2(b[1] - a[1], b[0] - a[0])
-    tip = b
-    back = 14
-    spread = 7
-    p1 = (tip[0] - back * math.cos(ang) + spread * math.sin(ang),
-          tip[1] - back * math.sin(ang) - spread * math.cos(ang))
-    p2 = (tip[0] - back * math.cos(ang) - spread * math.sin(ang),
-          tip[1] - back * math.sin(ang) + spread * math.cos(ang))
-    d.line([a, p1], fill="#333333", width=1)
-    d.line([a, p2], fill="#333333", width=1)
-    d.line([p1, tip], fill="#ffffff", width=2)
-    d.line([p2, tip], fill="#ffffff", width=2)
-    d.line([p1, p2], fill="#333333", width=1)
+def seg(a, b, dashed=False):
+    if not dashed:
+        d.line([a, b], fill=LINE, width=1)
+        return
+    # Dashed line drawn as short segments.
+    n = 14
+    for i in range(0, n, 2):
+        t0, t1 = i / n, (i + 1) / n
+        d.line([
+            (a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0),
+            (a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1),
+        ], fill=DASH, width=1)
 
 
-def diamond(a, b, filled=True):
-    """Association diamond at a (owner end)."""
-    import math
-    ang = math.atan2(b[1] - a[1], b[0] - a[0])
-    cx, cy = a[0] + 12 * math.cos(ang), a[1] + 12 * math.sin(ang)
-    long, short = 12, 8
-    px = [cx + long * math.cos(ang), cx + short * math.sin(ang),
-          cx - long * math.cos(ang), cx - short * math.sin(ang)]
-    py = [cy + long * math.sin(ang), cy - short * math.cos(ang),
-          cy - long * math.sin(ang), cy + short * math.cos(ang)]
-    d.line([b, (px[0], py[0])], fill="#333333", width=1)
-    pts = [(px[0], py[0]), (px[1], py[1]), (px[2], py[2]), (px[3], py[3])]
-    if filled:
-        d.polygon(pts, fill="#333333")
-    else:
-        d.polygon(pts, outline="#333333", width=1)
-    d.line([a, (px[2], py[2])], fill="#333333", width=1)
+def hollow_triangle(a, tip):
+    """Generalisation / realisation head at tip; stem comes from a."""
+    ux, uy = unit(a, tip)
+    base = (tip[0] - 14 * ux, tip[1] - 14 * uy)
+    px, py = -uy, ux
+    p1 = (base[0] + 7 * px, base[1] + 7 * py)
+    p2 = (base[0] - 7 * px, base[1] - 7 * py)
+    d.line([a, base], fill=LINE, width=1)
+    d.polygon([tip, p1, p2], fill="#ffffff", outline=LINE)
 
 
-# --- classes -----------------------------------------------------------
+def open_arrow(a, tip):
+    """Open (V-shaped) arrowhead at tip, used for the dependency."""
+    ux, uy = unit(a, tip)
+    back = (tip[0] - 12 * ux, tip[1] - 12 * uy)
+    px, py = -uy, ux
+    d.line([tip, (back[0] + 5 * px, back[1] + 5 * py)], fill=DASH, width=1)
+    d.line([tip, (back[0] - 5 * px, back[1] - 5 * py)], fill=DASH, width=1)
+
+
+def diamond(owner, other, filled):
+    """Association diamond at the owner end, line continues to other."""
+    ux, uy = unit(owner, other)
+    px, py = -uy, ux
+    mid = (owner[0] + 12 * ux, owner[1] + 12 * uy)
+    far = (owner[0] + 24 * ux, owner[1] + 24 * uy)
+    left = (mid[0] + 7 * px, mid[1] + 7 * py)
+    right = (mid[0] - 7 * px, mid[1] - 7 * py)
+    d.line([far, other], fill=LINE, width=1)
+    d.polygon([owner, left, far, right], fill=LINE if filled else "#ffffff", outline=LINE)
+
+
+# --- classes -----------------------------------------------------------------
 inv = draw_box(30, 30, 300, 30, 24, 90, "Inventory",
                ["- products: Product [0..*]"],
                ["+ addProduct(p): Boolean", "+ removeProduct(id): Product",
-                "+ findProduct(id): Product"], False, False)
+                "+ findProduct(id): Product"])
 sup = draw_box(30, 260, 260, 30, 60, 44, "Supplier",
                ["- supplierId: String", "- name: String", "- contactEmail: String"],
-               ["+ displayInformation()", "+ toDict()"], False, False)
+               ["+ displayInformation()", "+ toDict()"])
 prod = draw_box(430, 210, 340, 44, 100, 120, "Product",
                 ["- productId: String", "- name: String", "- price: Float",
                  "- stock: Integer", "- supplier: Supplier"],
                 ["+ updateStock(q): Void", "+ displayInformation()", "+ toDict()",
-                 "+ {abstract} getFulfilmentInfo(): String"], True, False)
+                 "+ {abstract} getFulfilmentInfo(): String"],
+                stereotype="abstract")
 phys = draw_box(330, 560, 240, 30, 24, 56, "PhysicalProduct",
                 ["- weight: Float"],
-                ["+ getFulfilmentInfo(): String", "+ calculateShippingCost(): Float"],
-                False, False)
+                ["+ getFulfilmentInfo(): String", "+ calculateShippingCost(): Float"])
 dig = draw_box(620, 560, 240, 30, 24, 36, "DigitalProduct",
-               ["- downloadSize: Float"], ["+ getFulfilmentInfo(): String"], False, False)
+               ["- downloadSize: Float"], ["+ getFulfilmentInfo(): String"])
 can = draw_box(30, 560, 240, 44, 0, 30, "CanBeShipped", [],
-               ["+ calculateShippingCost(): Float"], False, True)
+               ["+ calculateShippingCost(): Float"], stereotype="interface")
 fac = draw_box(760, 60, 360, 30, 0, 46, "ProductFactory", [],
-               ["+ {static} create(type, id, name, price,", "stock, supplier, weight, downloadSize): Product"],
-               False, False)
-ord_ = draw_box(1140, 210, 330, 30, 44, 100, "Order",
-                ["- orderId: String", "- orderLines: OrderLine [1..*]",
+               ["+ {static} create(type, id, name, price,",
+                "stock, supplier, weight, size): Product"])
+ord_ = draw_box(1140, 210, 330, 30, 64, 100, "Order",
+                ["- orderId: String", "- orderLines: OrderLine [0..*]",
                  "- discount: DiscountStrategy [1]"],
                 ["+ setDiscount(s): Void", "+ addOrderLine(p, q): Void",
-                 "+ removeOrderLine(id): Boolean", "+ calculateTotal(): Float"], False, False)
+                 "+ removeOrderLine(id): Boolean", "+ calculateTotal(): Float"])
 ordl = draw_box(1140, 460, 330, 30, 44, 52, "OrderLine",
                 ["- product: Product", "- quantity: Integer"],
-                ["+ calculateSubtotal(): Float", "+ displayInformation()"], False, False)
-strat = draw_box(1140, 620, 330, 44, 0, 26, "DiscountStrategy",
-                [], ["+ {abstract} apply(total): Float"], True, False)
-nod = draw_box(430, 760, 200, 30, 0, 26, "NoDiscount", [], ["+ apply(total): Float"], False, False)
-pct = draw_box(660, 760, 220, 30, 24, 26, "PercentageDiscount",
-              ["- percent: Float"], ["+ apply(total): Float"], False, False)
-blk = draw_box(910, 760, 240, 30, 44, 26, "BulkDiscount",
-              ["- threshold: Float", "- amount: Float"], ["+ apply(total): Float"], False, False)
-stu = draw_box(1180, 760, 220, 30, 24, 26, "StudentDiscount",
-               ["- percent: Float"], ["+ apply(total): Float"], False, False)
+                ["+ calculateSubtotal(): Float", "+ displayInformation()"])
+strat = draw_box(1140, 620, 330, 44, 0, 26, "DiscountStrategy", [],
+                 ["+ {abstract} apply(total): Float"], stereotype="abstract")
+nod = draw_box(820, 760, 200, 30, 0, 26, "NoDiscount", [], ["+ apply(total): Float"])
+pct = draw_box(1050, 760, 220, 30, 24, 26, "PercentageDiscount",
+               ["- percent: Float"], ["+ apply(total): Float"])
+blk = draw_box(1300, 760, 240, 30, 44, 26, "BulkDiscount",
+               ["- threshold: Float", "- amount: Float"], ["+ apply(total): Float"])
+stu = draw_box(1570, 760, 220, 30, 24, 26, "StudentDiscount",
+               ["- percent: Float"], ["+ apply(total): Float"])
 
-# --- relationships -----------------------------------------------------
-triangle(anchor(phys, "t"), anchor(prod, "b"))          # PhysicalProduct -> Product
-triangle(anchor(dig, "t"), anchor(prod, "b"))           # DigitalProduct -> Product
-line(anchor(phys, "l"), anchor(can, "r"), dashed=True,
-     label="implements", label_pos=(250, 585))
-diamond(anchor(inv, "r"), anchor(prod, "l"), filled=False)  # aggregation: Inventory uses Product
-line(anchor(prod, "l"), anchor(sup, "r"), label="1", label_pos=(340, 250))
-line(anchor(ordl, "l"), anchor(prod, "r"), label="1", label_pos=(900, 480))
-diamond(anchor(ord_, "b"), anchor(ordl, "t"), filled=True)  # composition: Order owns OrderLine
-# Aggregation diamond: the client owns the strategy and orders can share it.
-diamond((1360, 392), anchor(strat, "t"), filled=False)
-d.text((1352, 545), "1", font=f_small, fill="#333333")
-triangle(anchor(nod, "r"), anchor(strat, "l"))
-triangle(anchor(pct, "r"), anchor(strat, "l"))
-triangle(anchor(blk, "r"), anchor(strat, "l"))
-triangle(anchor(stu, "t"), anchor(strat, "b"))          # StudentDiscount -> DiscountStrategy
-line(anchor(fac, "b"), anchor(prod, "t"), dashed=True,
-     label="creates()", label_pos=(720, 175))
+# --- relationships -----------------------------------------------------------
+# Generalisation: PhysicalProduct and DigitalProduct -> Product
+hollow_triangle((450, 560), (600, 482))
+hollow_triangle((740, 560), (600, 482))
+
+# Realisation: PhysicalProduct implements CanBeShipped
+seg((330, 619), (270, 601), dashed=True)
+hollow_triangle((330, 619), (270, 601))
+label(268, 540, "implements")
+
+# Aggregation: Inventory (0..*) to Product (0..*)
+diamond((330, 120), (430, 240), filled=False)
+label(338, 100, "0..*")
+label(398, 178, "0..*")
+
+# Association: Product (0..*) to Supplier (1)
+seg((430, 340), (290, 331))
+label(392, 314, "0..*")
+label(296, 314, "1")
+
+# Association: OrderLine (0..*) to Product (1)
+seg((770, 440), (1140, 500))
+label(776, 420, "1")
+label(1096, 470, "0..*")
+
+# Composition: Order (1) to OrderLine (0..*)
+diamond((1305, 412), (1305, 460), filled=True)
+label(1320, 414, "1")
+label(1312, 440, "0..*")
+
+# Aggregation: Order (0..*) to DiscountStrategy (1), routed down the right side
+diamond((1470, 300), (1560, 300), filled=False)
+seg((1560, 300), (1560, 659))
+seg((1560, 659), (1470, 659))
+label(1476, 282, "0..*")
+label(1476, 640, "1")
+
+# Generalisation: four strategies in one row under DiscountStrategy
+seg((920, 728), (1680, 728))
+for cx, top in ((920, 760), (1160, 760), (1420, 760), (1680, 760)):
+    seg((cx, top), (cx, 728))
+hollow_triangle((1305, 728), (1305, 698))
+
+# Dependency: ProductFactory --<<creates>>--> Product
+seg((940, 144), (600, 210), dashed=True)
+open_arrow((940, 144), (600, 210))
+label(660, 160, f"{LEFT_Q}creates{RIGHT_Q}")
 
 img.save("uml_lab9.png")
 print("uml_lab9.png written")

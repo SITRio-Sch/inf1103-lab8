@@ -1,6 +1,6 @@
 """Automated tests for the Lab 9 Inventory Management System.
 
-Run with: python -m pytest test_lab9.py -v
+Run with: python -m pytest -q tests
 """
 
 import pytest
@@ -14,7 +14,7 @@ from discount_strategy import (
 )
 from digital_product import DigitalProduct
 from inventory import Inventory
-from inventory_manager import get_positive_float, load_products
+from inventory_manager import get_non_negative_int, get_positive_float, load_products
 from order import Order
 from order_line import OrderLine
 from physical_product import PhysicalProduct
@@ -109,7 +109,7 @@ def test_factory_creates_both_product_types():
 
 
 def test_factory_raises_for_unknown_type():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Unknown product type: service"):
         ProductFactory.create("service", "S1", "Install", 30.0, 5, make_supplier())
 
 
@@ -139,6 +139,13 @@ def test_product_rejects_bad_price_and_stock():
         DigitalProduct("D1", "Editor", 10.0, -1, 50.0, supplier)
 
 
+def test_update_stock_rejects_negative_quantity():
+    lamp = make_lamp()
+    with pytest.raises(ValueError, match="Stock cannot be negative."):
+        lamp.update_stock(-1)
+    assert lamp.stock == 10
+
+
 # --- Section 5: Exception handling ------------------------------------------
 
 
@@ -151,6 +158,17 @@ def test_get_positive_float_loops_until_valid(monkeypatch, capsys):
     printed = capsys.readouterr().out
     assert "Please enter a valid number, e.g. 12.50" in printed
     assert "Please enter a number greater than zero." in printed
+
+
+def test_get_non_negative_int_reasks_until_valid(monkeypatch, capsys):
+    answers = iter(["abc", "-2", "3"])
+    monkeypatch.setattr("builtins.input", lambda _: next(answers))
+
+    assert get_non_negative_int("Stock Quantity: ") == 3
+
+    printed = capsys.readouterr().out
+    assert "Please enter a whole number, e.g. 10" in printed
+    assert "Please enter a number that is zero or greater." in printed
 
 
 def test_load_products_skips_bad_rows(tmp_path, capsys):
@@ -182,7 +200,7 @@ def test_load_products_missing_file_does_not_crash(tmp_path, capsys):
     load_products(str(tmp_path / "nope.csv"), inventory, make_supplier())
 
     printed = capsys.readouterr().out
-    assert "not found." in printed
+    assert "Products file not found:" in printed
     assert "Load attempt finished." in printed
     assert inventory.get_products() == []
 

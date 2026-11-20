@@ -133,6 +133,32 @@ def get_positive_float(prompt: str) -> float:
             print("Please enter a valid number, e.g. 12.50")
 
 
+def get_non_negative_int(prompt: str) -> int:
+    """Keep asking until the user gives a whole number of zero or more."""
+    while True:
+        try:
+            value = int(input(prompt))
+            if value < 0:
+                print("Please enter a number that is zero or greater.")
+                continue
+            return value
+        except ValueError:
+            print("Please enter a whole number, e.g. 10")
+
+
+def get_non_negative_float(prompt: str) -> float:
+    """Keep asking until the user gives a number of zero or more."""
+    while True:
+        try:
+            value = float(input(prompt))
+            if value < 0:
+                print("Please enter a number that is zero or greater.")
+                continue
+            return value
+        except ValueError:
+            print("Please enter a valid number, e.g. 12.50")
+
+
 def load_products(path: str, st: Inventory, supplier: Supplier) -> None:
     """Read a CSV file and create one product per row, without crashing."""
     loaded = 0
@@ -140,7 +166,7 @@ def load_products(path: str, st: Inventory, supplier: Supplier) -> None:
     try:
         file = open(path, newline="")
     except FileNotFoundError:
-        print(f"{path} not found.")
+        print(f"Products file not found: {path}")
     else:
         with file:
             rows = list(csv.reader(file))
@@ -193,22 +219,12 @@ def add_product(inventory: Inventory) -> None:
     if supplier is None:
         return
 
-    # get_positive_float loops on bad input instead of crashing.
+    # The get_ helpers loop on bad input, so bad values never return to the menu.
     price = get_positive_float("Price: ")
+    stock = get_non_negative_int("Stock Quantity: ")
+    extra = get_non_negative_float("Weight (kg) or Download Size (MB): ")
 
     try:
-        stock = int(input("Stock Quantity: "))
-
-        if stock < 0:
-            print("Stock cannot be negative.")
-            return
-
-        extra = float(input("Weight (kg) or Download Size (MB): "))
-
-        if extra < 0:
-            print("Extra value cannot be negative.")
-            return
-
         # The factory decides which concrete class to build.
         product = ProductFactory.create(
             "physical" if product_type == "1" else "digital",
@@ -221,9 +237,8 @@ def add_product(inventory: Inventory) -> None:
             extra,
         )
         inventory.add_product(product)
-
-    except ValueError:
-        print("Invalid input. Please enter valid numbers.")
+    except ValueError as error:
+        print(error)
 
 
 def update_stock(inventory: Inventory) -> None:
@@ -238,11 +253,8 @@ def update_stock(inventory: Inventory) -> None:
 
     product.display_information()
 
-    try:
-        quantity = int(input("New Stock Quantity: "))
-        product.update_stock(quantity)
-    except ValueError:
-        print("Invalid stock quantity.")
+    quantity = get_non_negative_int("New Stock Quantity: ")
+    product.update_stock(quantity)
 
 
 def search_product(inventory: Inventory) -> None:

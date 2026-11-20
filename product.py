@@ -52,11 +52,11 @@ class Product(ABC):
         return self.__supplier
 
     def update_stock(self, quantity: int) -> None:
-        if quantity >= 0:
-            self.__stock = quantity
-            print("Stock updated successfully.")
-        else:
-            print("Stock cannot be negative.")
+        if quantity < 0:
+            raise ValueError("Stock cannot be negative.")
+
+        self.__stock = quantity
+        print("Stock updated successfully.")
 
     def display_information(self) -> None:
         print(f"Product ID: {self.__product_id}")

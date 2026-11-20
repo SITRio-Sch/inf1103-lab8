@@ -26,7 +26,7 @@ doc.add_paragraph(
     "keeps the program alive around failures like bad input or a missing file."
 )
 doc.add_paragraph(
-    "Automated tests (test_lab9.py, 17 tests) check the strategy and factory behaviour so the "
+    "Automated tests (tests/test_lab9.py, 19 tests) check the strategy and factory behaviour so the "
     "CI pipeline can confirm every push."
 )
 
@@ -36,7 +36,9 @@ doc.add_paragraph(
     "== 'none' / elif 'percentage' / elif 'bulk' inside calculate_total()) is exactly what must "
     "not be written - it puts every discount decision inside Order. Section 2 instead moves the "
     "behaviour into DiscountStrategy classes, so Order's calculate_total only calls "
-    "strategy.apply(total)."
+    "strategy.apply(total). The same kind of if/else on the product-type string appears in "
+    "create_oop_inventory() and add_product() in inventory_manager.py: each branch selects which "
+    "concrete product class to build. The factory in Section 3 replaced that behaviour selection."
 )
 doc.add_paragraph(
     "(2) Places creating PhysicalProduct or DigitalProduct directly: the create_oop_inventory() "
@@ -70,15 +72,16 @@ doc.add_paragraph(
     "PercentageDiscount(10) it gives 225. Actual run (demo_lab9.py): 230.0 and 225.0 - matched."
 )
 doc.add_paragraph(
-    "2.4 Extension: StudentDiscount (5% off) was added as a fifth subclass of DiscountStrategy in "
-    "discount_strategy.py; Order needed no change - demo_lab9.py shows the same 250 order now "
-    "returning 237.5. Prediction about the relationship: I first guessed composition. Looking at "
-    "the code, strategies are created outside Order and passed in (or set later with "
-    "set_discount), and two orders can share the same PercentageDiscount(20) object - the client "
-    "owns the strategy's lifecycle, so the relationship is aggregation, not composition. Order "
-    "uses exactly one DiscountStrategy (multiplicity 1). The only composed piece stays "
-    "Order -> OrderLine, which Order creates itself. Prediction was wrong; I changed the answer "
-    "to aggregation and drew it with an open diamond in uml_lab9."
+    "2.4 Extension: StudentDiscount (5% off) was added as a fourth strategy, alongside NoDiscount, "
+    "PercentageDiscount and BulkDiscount, in discount_strategy.py; Order needed no change - "
+    "demo_lab9.py shows the same 250 order now returning 237.5. Prediction about the relationship: "
+    "I first guessed composition. Looking at the code, strategies are created outside Order and "
+    "passed in (or set later with set_discount), and the code allows the same PercentageDiscount(20) "
+    "object to be passed to two orders - the client owns the strategy's lifecycle, so the "
+    "relationship is aggregation, not composition. The multiplicity is Order 0..* - 1 "
+    "DiscountStrategy. The only composed piece stays Order -> OrderLine, which Order creates "
+    "itself. Prediction was wrong; I changed the answer to aggregation and drew it with an open "
+    "diamond in uml_lab9."
 )
 
 doc.add_heading("3. Factory pattern - Predict first answers", level=1)
@@ -88,10 +91,10 @@ doc.add_paragraph(
     "crashing. Actual run confirmed exactly that."
 )
 doc.add_paragraph(
-    "3.3 Without the factory, adding BundleProduct would need edits in: the import list, the "
-    "type branch in create_oop_inventory(), the type branch in add_product(), load_products(), "
-    "and any isinstance checks - 5 places, every one breaking OCP. With the factory added, the "
-    "change is one new class plus one branch inside ProductFactory.create() - a single place. "
+    "3.3 Without the factory, adding BundleProduct would need the new class plus a new type branch "
+    "in each of the 2 creation sites (create_oop_inventory() and add_product(), see 1.5(2)) - 3 "
+    "edits, each breaking OCP. With the factory, the change is the new class plus 1 branch inside "
+    "ProductFactory.create() - a single place. "
     "This is acceptable because each change is explained by one new product type, and callers "
     "still only see Product (LSP holds)."
 )
@@ -124,21 +127,24 @@ doc.add_paragraph(
 doc.add_heading("6. UML class diagram", level=1)
 doc.add_paragraph(
     "uml_lab9.drawio / uml_lab9.png add DiscountStrategy (abstract, +apply(total)) with "
-    "NoDiscount, PercentageDiscount, BulkDiscount and StudentDiscount inheriting from it. Order "
-    "holds exactly one DiscountStrategy: an open diamond (aggregation, multiplicity 1) because "
-    "the client creates the strategy and orders can share it. ProductFactory has a dashed "
-    "dependency arrow labelled creates() to Product. The Section 1.5 diagnose notes informed "
-    "these changes: the creation sites became a factory dependency instead of direct subclass "
-    "coupling."
+    "NoDiscount, PercentageDiscount, BulkDiscount and StudentDiscount inheriting from it, laid out "
+    "in one row. Order and DiscountStrategy are joined by an aggregation (open diamond at Order): "
+    "Order 0..* - 1 DiscountStrategy, because the client creates the strategy and orders can share "
+    "it. ProductFactory has a dashed dependency arrow labelled 'creates' to Product. The Section 1.5 "
+    "diagnose notes informed these changes: the creation sites became a factory dependency instead "
+    "of direct subclass coupling."
 )
 
 doc.add_heading("7. Testing and review", level=1)
 doc.add_paragraph(
-    "python -m pytest test_lab9.py: 17 passed, also inside the Docker container. Coverage: totals "
-    "through strategies with no if/elif in Order, new strategies without changing Order "
-    "(StudentDiscount and LoyaltyDiscount), set_discount swapping, factory creating both types and "
-    "raising on unknown type and bad price, quantity / price / stock validation, "
-    "get_positive_float looping, load_products skipping bad rows and handling a missing file."
+    "python -m pytest -q tests: 19 passed, locally and inside the Docker container. The tests live "
+    "in the tests/ folder (tests/test_lab9.py, with tests/conftest.py adding the project root to "
+    "sys.path). Coverage: totals through strategies with no if/elif in Order, new strategies "
+    "without changing Order (StudentDiscount and LoyaltyDiscount), set_discount swapping, factory "
+    "creating both types and raising on unknown type and bad price, quantity / price / stock "
+    "validation, update_stock rejecting a negative quantity, get_positive_float and "
+    "get_non_negative_int re-asking on bad input, load_products skipping bad rows and reporting a "
+    "missing file."
 )
 
 doc.add_heading("8. Reflection", level=1)
@@ -156,17 +162,17 @@ doc.add_paragraph(
 )
 doc.add_paragraph(
     "Prediction that was wrong: Section 2.4 (composition vs aggregation). The assumption was that "
-    "Order owns its discount; running the code showed strategies are supplied by the client and "
-    "shared between orders, so I rewrote it as aggregation and updated the diagram."
+    "Order owns its discount; the code allows the same strategy object to be passed to two orders, "
+    "so strategies are supplied by the client, and I rewrote it as aggregation and updated "
+    "the diagram."
 )
 
 doc.add_heading("9. Git and Docker workflow", level=1)
 doc.add_paragraph(
-    "git status -> git add . -> git commit -> git push origin: the Lab 9 code commit plus a "
-    "submission-artifacts commit (notes, screenshots, UML) pushed to "
-    "https://github.com/SITRio-Sch/inf1103-lab8.git. docker build -t inf1103-lab9 ., then "
-    "docker run for the program, the demo, and pytest (17 passed). Screenshots of both "
-    "workflows: git_workflow.png and docker_workflow.png."
+    "git status -> git add . -> git commit -> git push origin main, then HEAD was checked against "
+    "origin/main (https://github.com/SITRio-Sch/inf1103-lab8.git). docker build -t inf1103-lab9 ., "
+    "then docker run for the program and for pytest (tests/, 19 passed); demo_lab9.py was run "
+    "directly as well."
 )
 
 doc.save("Lab 9.docx")
