@@ -5,7 +5,13 @@ Run with: python -m pytest test_lab9.py -v
 
 import pytest
 
-from discount_strategy import BulkDiscount, NoDiscount, PercentageDiscount
+from discount_strategy import (
+    BulkDiscount,
+    DiscountStrategy,
+    NoDiscount,
+    PercentageDiscount,
+    StudentDiscount,
+)
 from digital_product import DigitalProduct
 from inventory import Inventory
 from inventory_manager import get_positive_float, load_products
@@ -25,11 +31,11 @@ def make_lamp(weight: float = 2.0) -> PhysicalProduct:
     return PhysicalProduct("P001", "Desk Lamp", 25.00, 10, weight, make_supplier())
 
 
-class StudentDiscount(PercentageDiscount):
-    """A brand-new strategy added without touching Order."""
+class LoyaltyDiscount(DiscountStrategy):
+    """A discount invented only inside this test file: Order must not change."""
 
     def apply(self, total: float) -> float:
-        return total * 0.95
+        return total - 10 if total >= 100 else total
 
 
 # --- Section 2: Strategy pattern -------------------------------------------
@@ -60,6 +66,13 @@ def test_bulk_discount_ignores_small_totals():
     assert order.calculate_total() == pytest.approx(100.0)
 
 
+def test_student_discount_five_percent():
+    # The Section 2.4 fourth discount: a new subclass, Order untouched.
+    order = Order("ORD-1", StudentDiscount())
+    order.add_order_line(make_lamp(), 4)  # 100 total
+    assert order.calculate_total() == pytest.approx(95.0)
+
+
 def test_strategy_can_be_swapped():
     order = Order("ORD-1")
     order.add_order_line(make_lamp(), 4)
@@ -70,10 +83,10 @@ def test_strategy_can_be_swapped():
 
 
 def test_new_strategy_needs_no_order_change():
-    # A discount the project never had: Order is unchanged.
-    order = Order("ORD-1", StudentDiscount(10))
-    order.add_order_line(make_lamp(), 4)
-    assert order.calculate_total() == pytest.approx(95.0)
+    # A discount the project never had, defined only in this file: Order is unchanged.
+    order = Order("ORD-1", LoyaltyDiscount())
+    order.add_order_line(make_lamp(), 4)  # 100 total
+    assert order.calculate_total() == pytest.approx(90.0)
 
 
 def test_order_rejects_non_strategy():

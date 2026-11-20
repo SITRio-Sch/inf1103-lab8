@@ -143,6 +143,8 @@ pct = draw_box(660, 760, 220, 30, 24, 26, "PercentageDiscount",
               ["- percent: Float"], ["+ apply(total): Float"], False, False)
 blk = draw_box(910, 760, 240, 30, 44, 26, "BulkDiscount",
               ["- threshold: Float", "- amount: Float"], ["+ apply(total): Float"], False, False)
+stu = draw_box(1180, 760, 220, 30, 24, 26, "StudentDiscount",
+               ["- percent: Float"], ["+ apply(total): Float"], False, False)
 
 # --- relationships -----------------------------------------------------
 triangle(anchor(phys, "t"), anchor(prod, "b"))          # PhysicalProduct -> Product
@@ -153,10 +155,13 @@ diamond(anchor(inv, "r"), anchor(prod, "l"), filled=False)  # aggregation: Inven
 line(anchor(prod, "l"), anchor(sup, "r"), label="1", label_pos=(340, 250))
 line(anchor(ordl, "l"), anchor(prod, "r"), label="1", label_pos=(900, 480))
 diamond(anchor(ord_, "b"), anchor(ordl, "t"), filled=True)  # composition: Order owns OrderLine
-line(anchor(ord_, "b"), anchor(strat, "t"), label="uses 1", label_pos=(1265, 575))
+# Aggregation diamond: the client owns the strategy and orders can share it.
+diamond((1360, 392), anchor(strat, "t"), filled=False)
+d.text((1352, 545), "1", font=f_small, fill="#333333")
 triangle(anchor(nod, "r"), anchor(strat, "l"))
 triangle(anchor(pct, "r"), anchor(strat, "l"))
 triangle(anchor(blk, "r"), anchor(strat, "l"))
+triangle(anchor(stu, "t"), anchor(strat, "b"))          # StudentDiscount -> DiscountStrategy
 line(anchor(fac, "b"), anchor(prod, "t"), dashed=True,
      label="creates()", label_pos=(720, 175))
 

@@ -51,3 +51,19 @@ class BulkDiscount(DiscountStrategy):
         if total >= self.__threshold:
             return total - self.__amount
         return total
+
+
+class StudentDiscount(DiscountStrategy):
+    """Section 2.4 extension: a fourth discount, 5% off by default.
+
+    Added as a new subclass - Order was not edited at all (Open/Closed).
+    """
+
+    def __init__(self, percent: float = 5.0) -> None:
+        if percent <= 0 or percent > 100:
+            raise ValueError("Discount percent must be between 1 and 100.")
+
+        self.__percent: float = percent
+
+    def apply(self, total: float) -> float:
+        return total * (1 - self.__percent / 100)

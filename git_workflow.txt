@@ -1,0 +1,36 @@
+$ git status
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  Changes: order.py, product.py, inventory_manager.py, Dockerfile,
+           discount_strategy.py (new), product_factory.py (new),
+           products.csv (new), test_lab9.py (new), test_lab8.py (deleted),
+           uml_lab9.drawio (new), uml_lab9.png (new)
+
+$ git add .
+$ git commit -m "Lab 9: Strategy and Factory patterns, validation, exception handling and tests"
+[main 8d31f46] Lab 9: Strategy and Factory patterns, validation, exception handling and tests
+ 15 files changed, 749 insertions(+), 472 deletions(-)
+ create mode 100644 discount_strategy.py
+ create mode 100644 product_factory.py
+ create mode 100644 products.csv
+ create mode 100644 test_lab9.py
+ delete mode 100644 test_lab8.py
+ create mode 100644 uml_lab9.drawio
+ create mode 100644 uml_lab9.png
+
+$ git log --oneline
+8d31f46 Lab 9: Strategy and Factory patterns, validation, exception handling and tests
+897cabc Add exported UML class diagram
+adf38a8 Add show_product_details, shared-inventory LSP test and Predict First 4 check
+0e64baa Set realistic product weights in inventory data
+eb19eb3 Lab 8: association, aggregation, composition, type hints and LSP
+128e288 Completed Lab 7 inheritance and abstraction
+19f3a6b Minor refactor inventory.py
+370887e Refactored inventory system using OOP
+01f74c9 added inventory_manager
+
+$ git push origin
+To https://github.com/SITRio-Sch/inf1103-lab8.git
+   897cabc..8d31f46  main -> main

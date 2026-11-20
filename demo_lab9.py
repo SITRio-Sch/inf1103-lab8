@@ -3,7 +3,7 @@
 import io
 import sys
 
-from discount_strategy import BulkDiscount, PercentageDiscount
+from discount_strategy import BulkDiscount, PercentageDiscount, StudentDiscount
 from inventory import Inventory
 from inventory_manager import get_positive_float, load_products
 from order import Order
@@ -27,6 +27,10 @@ def main() -> None:
 
     section("2.2/2.3 same order with PercentageDiscount(10)")
     order.set_discount(PercentageDiscount(10))
+    print(f"calculate_total() = {order.calculate_total()}")
+
+    section("2.4 same order with StudentDiscount (5%, new class, Order unchanged)")
+    order.set_discount(StudentDiscount())
     print(f"calculate_total() = {order.calculate_total()}")
 
     section("3.2 ProductFactory.create('service', ...)")

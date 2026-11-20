@@ -43,6 +43,9 @@
         <mxCell id="blk" value="&lt;b&gt;BulkDiscount&lt;/b&gt;&lt;hr&gt;- threshold: Float&lt;br&gt;- amount: Float&lt;hr&gt;+ apply(total: Float): Float" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#ffffff;strokeColor=#333333;" vertex="1" parent="1">
           <mxGeometry x="910" y="760" width="240" height="80" as="geometry" />
         </mxCell>
+        <mxCell id="stu" value="&lt;b&gt;StudentDiscount&lt;/b&gt;&lt;hr&gt;- percent: Float&lt;hr&gt;+ apply(total: Float): Float" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=6;spacingTop=4;fillColor=#ffffff;strokeColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="1180" y="760" width="220" height="80" as="geometry" />
+        </mxCell>
         <mxCell id="e1" value="" style="endArrow=block;endFill=0;html=1;rounded=0;" edge="1" parent="1" source="phys" target="prod">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
@@ -58,13 +61,13 @@
         <mxCell id="e5" value="1" style="endArrow=classic;html=1;rounded=0;" edge="1" parent="1" source="prod" target="sup">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e6" value="1" style="endArrow=classic;html=1;rounded=0;" edge="1" parent="1" source="ordl" target="prod">
+        <mxCell id="e6" value="1" style="endArrow=classic;html=1;rounded=0;" edge="1" source="ordl" target="prod">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e7" value="composes [1..*]" style="endArrow=diamondThin;endFill=1;html=1;rounded=0;" edge="1" parent="1" source="ord" target="ordl">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e8" value="uses 1" style="endArrow=classic;html=1;rounded=0;" edge="1" parent="1" source="ord" target="strat">
+        <mxCell id="e8" value="aggregates [1]" style="endArrow=diamondThin;endFill=0;html=1;rounded=0;" edge="1" parent="1" source="ord" target="strat">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e9" value="" style="endArrow=block;endFill=0;html=1;rounded=0;" edge="1" parent="1" source="nod" target="strat">
@@ -74,6 +77,9 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e11" value="" style="endArrow=block;endFill=0;html=1;rounded=0;" edge="1" parent="1" source="blk" target="strat">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" value="" style="endArrow=block;endFill=0;html=1;rounded=0;" edge="1" parent="1" source="stu" target="strat">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e12" value="creates()" style="endArrow=thin;endFill=0;dashed=1;html=1;rounded=0;" edge="1" parent="1" source="fac" target="prod">
