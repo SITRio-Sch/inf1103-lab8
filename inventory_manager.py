@@ -1,13 +1,16 @@
+import csv
 import json
 import os
 
+from discount_strategy import BulkDiscount, PercentageDiscount
 from inventory import Inventory
-from physical_product import PhysicalProduct
-from digital_product import DigitalProduct
+from order import Order
 from product import ProductData
+from product_factory import ProductFactory
 from supplier import Supplier
 
 INVENTORY_FILE = "inventory.json"
+PRODUCTS_FILE = "products.csv"
 
 # Shared by every old record that has no supplier of its own.
 DEFAULT_SUPPLIER = Supplier("S000", "Unknown Supplier", "unknown@example.com")
@@ -51,28 +54,18 @@ def create_oop_inventory() -> Inventory:
         product_type = item.get("type", "physical")
         supplier = get_supplier_for_record(item, supplier_cache)
 
-        if product_type == "physical":
-            product = PhysicalProduct(
-                str(item["id"]),
-                str(item["name"]),
-                float(item["price"]),
-                int(item["stock"]),
-                float(item.get("weight", 0)),
-                supplier
-            )
-
-        elif product_type == "digital":
-            product = DigitalProduct(
-                str(item["id"]),
-                str(item["name"]),
-                float(item["price"]),
-                int(item["stock"]),
-                float(item["download_size"]),
-                supplier
-            )
-
-        else:
-            raise ValueError("Unknown product type.")
+        # Section 1.5 fix: creation goes through the factory, so this loop
+        # knows only about Product, not about the concrete classes.
+        product = ProductFactory.create(
+            product_type,
+            str(item["id"]),
+            str(item["name"]),
+            float(item["price"]),
+            int(item["stock"]),
+            supplier,
+            float(item.get("weight", 0)),
+            float(item.get("download_size", 0)),
+        )
 
         if not inventory.add_product(product):
             raise ValueError("Duplicate product ID in inventory.json.")
@@ -123,6 +116,55 @@ def ask_for_supplier(inventory: Inventory) -> Supplier | None:
     return Supplier(supplier_id, name, contact_email)
 
 
+def get_positive_float(prompt: str) -> float:
+    """Keep asking until the user gives a positive number.
+
+    float() raises ValueError for text like "abc"; the bad value itself is
+    handled with validation (value <= 0), so both cases are covered here.
+    """
+    while True:
+        try:
+            value = float(input(prompt))
+            if value <= 0:
+                print("Please enter a number greater than zero.")
+                continue
+            return value
+        except ValueError:
+            print("Please enter a valid number, e.g. 12.50")
+
+
+def load_products(path: str, st: Inventory, supplier: Supplier) -> None:
+    """Read a CSV file and create one product per row, without crashing."""
+    loaded = 0
+
+    try:
+        file = open(path, newline="")
+    except FileNotFoundError:
+        print(f"{path} not found.")
+    else:
+        with file:
+            rows = list(csv.reader(file))
+
+        # Read rows with csv.reader and skip the header row.
+        for row in rows[1:]:
+            try:
+                product = ProductFactory.create(
+                    row[0], row[1], row[2], row[3], row[4], supplier
+                )
+            except ValueError:
+                # Report this row and keep going - one bad row does not stop the file.
+                print(f"Skipped row: {row}")
+                continue
+
+            if st.add_product(product):
+                loaded += 1
+
+        print(f"{loaded} products loaded.")
+    finally:
+        print("Load attempt finished.")
+
+
+
 def add_product(inventory: Inventory) -> None:
     print("\nAdd New Product")
     print("1. Physical Product")
@@ -151,36 +193,33 @@ def add_product(inventory: Inventory) -> None:
     if supplier is None:
         return
 
+    # get_positive_float loops on bad input instead of crashing.
+    price = get_positive_float("Price: ")
+
     try:
-        price = float(input("Price: "))
         stock = int(input("Stock Quantity: "))
 
-        if not 0 <= price < float("inf") or stock < 0:
-            print("Price and stock must be non-negative.")
+        if stock < 0:
+            print("Stock cannot be negative.")
             return
 
-        if product_type == "1":
-            weight = float(input("Weight (kg): "))
+        extra = float(input("Weight (kg) or Download Size (MB): "))
 
-            if not 0 <= weight < float("inf"):
-                print("Invalid weight.")
-                return
+        if extra < 0:
+            print("Extra value cannot be negative.")
+            return
 
-            product = PhysicalProduct(
-                product_id, name, price, stock, weight, supplier
-            )
-
-        else:
-            download_size = float(input("Download Size (MB): "))
-
-            if not 0 <= download_size < float("inf"):
-                print("Invalid download size.")
-                return
-
-            product = DigitalProduct(
-                product_id, name, price, stock, download_size, supplier
-            )
-
+        # The factory decides which concrete class to build.
+        product = ProductFactory.create(
+            "physical" if product_type == "1" else "digital",
+            product_id,
+            name,
+            price,
+            stock,
+            supplier,
+            extra,
+            extra,
+        )
         inventory.add_product(product)
 
     except ValueError:
@@ -225,6 +264,41 @@ def remove_product(inventory: Inventory) -> None:
     inventory.remove_product(product_id)
 
 
+def apply_discount_example(inventory: Inventory) -> None:
+    """Small demo: one order, discount behaviour swapped through strategies."""
+    print("\nDiscount Example")
+
+    product_id = input("Enter Product ID to order: ").strip().upper()
+    product = inventory.find_product(product_id)
+
+    if product is None:
+        print("Product not found.")
+        return
+
+    quantity = int(get_positive_float("Quantity: "))
+
+    order = None
+    order_total_before: float | None = None
+
+    try:
+        order = Order(order_id="ORD-001")
+        order.add_order_line(product, quantity)
+        order_total_before = order.calculate_total()
+        print(f"Total with no discount: ${order_total_before:.2f}")
+
+        percent = int(input("Percent discount (0 to skip): "))
+        if percent > 0:
+            order.set_discount(PercentageDiscount(percent))
+            print(f"Total with percentage: ${order.calculate_total():.2f}")
+
+        # Bulk discount applies at a threshold of 200.
+        if order_total_before >= 200:
+            order.set_discount(BulkDiscount(200, 20))
+            print(f"Total with bulk discount: ${order.calculate_total():.2f}")
+    except (ValueError, TypeError) as error:
+        print(f"Discount example failed: {error}")
+
+
 def show_menu() -> None:
     print("\n----------- MENU -----------")
     print("1. Display All Products")
@@ -233,12 +307,14 @@ def show_menu() -> None:
     print("4. Search Product")
     print("5. Remove Product")
     print("6. Save Inventory")
-    print("7. Exit")
+    print("7. Load Products from CSV")
+    print("8. Discount Example (Strategy)")
+    print("9. Exit")
     print("----------------------------")
 
 
 def main() -> None:
-    print("INVENTORY MANAGEMENT SYSTEM - LAB 8")
+    print("INVENTORY MANAGEMENT SYSTEM - LAB 9")
 
     try:
         inventory = create_oop_inventory()
@@ -269,12 +345,18 @@ def main() -> None:
             save_inventory(inventory)
 
         elif option == "7":
+            load_products(PRODUCTS_FILE, inventory, DEFAULT_SUPPLIER)
+
+        elif option == "8":
+            apply_discount_example(inventory)
+
+        elif option == "9":
             save_inventory(inventory)
             print("Program terminated.")
             break
 
         else:
-            print("Invalid option. Choose 1 to 7.")
+            print("Invalid option. Choose 1 to 9.")
 
 
 if __name__ == "__main__":

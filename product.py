@@ -17,8 +17,11 @@ class Product(ABC):
     ) -> None:
         if not product_id or not name:
             raise ValueError("Product ID and name cannot be empty.")
-        if price < 0 or stock < 0:
-            raise ValueError("Price and stock cannot be negative.")
+        # Lab 9 validation: a rule is broken, so raise with a clear message.
+        if price <= 0:
+            raise ValueError("Price must be greater than zero.")
+        if stock < 0:
+            raise ValueError("Stock cannot be negative.")
         if not isinstance(supplier, Supplier):
             raise TypeError("Product must be created with a Supplier object.")
 
